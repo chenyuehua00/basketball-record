@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover, orientation=landscape"
+    />
+
+    <title>Vant CDN Demo</title>
+
+    <!-- 引入样式文件 -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/vant@4/lib/index.css"
+    />
+
+    <!-- 自定义样式 -->
+    <style>
+      body {
+		max-height: 500px;
+        color: #333;
+        background-color: #fff;
+		transform：rotate(90deg);
+	    transform-origin: 0% 0%;
+	    position: absolute;
+	    left: 100vw;
+      },
+	  
+	  .table-container {
+	    max-height: 500px; /* 根据需要设置容器的高度 */
+	    overflow-y: auto; /* 启用垂直滚动 */
+	  }
+	  
+	  .table-header {
+	    text-align: center;
+	    font-weight: bold;
+	    background-color: #f3f3f3;
+		border-top: 10 px solid #666;
+	  }
+	   
+	  .header-cell, .cell {
+	    text-align: center;
+	    padding: 10px 0;
+	    box-sizing: border-box;
+		border-right: 1px solid #ddd;
+	  }
+	  
+	  .cell-last {
+		  text-align: center;
+		  padding: 10px 0;
+		  box-sizing: border-box;
+	  }
+	   
+	  .table-row:not(:last-child) {
+		border-top: 1px solid #ddd;
+	    border-bottom: 1px solid #ddd;
+	  }
+	   
+	  /* 根据需要调整列的宽度和样式 */
+	  .vant-col {
+	    border: 1px solid #ddd;
+	  }
+	  
+	  .full-button {
+	    width: 100%;
+	    text-align: center;
+	  }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+		
+	  <van-floating-panel v-show="addPlayerShow == 1" closeable style="width: 100%;">
+	      <van-form @submit="onSubmitNewPlayer">
+	          <van-cell-group>
+	              <van-field v-model="newPlayer.number" type="number" label="号码" />
+	          </van-cell-group>
+			  <van-cell-group>
+				<van-field v-model="newPlayer.name" label="名称" placeholder="请输入名字" />
+	          </van-cell-group>
+			  <van-button type="primary" native-type="submit">提交</van-button>
+	      </van-form>
+	  </van-floating-panel>
+      <van-tabs v-model:active="tabIndex" @click-tab="onClickTab" sticky animated >
+        <van-tab title="球员" name="0">
+		  <div class="table-container">
+			<van-row justify="space-around" class="table-header">
+			  <van-col span="2" class="cell">号码</van-col>
+			  <van-col span="4" class="cell">球员</van-col>
+			  <van-col span="2" class="cell">得分</van-col>
+			  <van-col span="2" class="cell">投篮</van-col>
+			  <van-col span="2" class="cell">三分</van-col>
+			  <van-col span="2" class="cell">前板</van-col>
+			  <van-col span="2" class="cell">后板</van-col>
+			  <van-col span="2" class="cell">助攻</van-col>
+			  <van-col span="2" class="cell">抢断</van-col>
+			  <van-col span="2" class="cell">盖帽</van-col>
+			  <van-col span="2" class="cell-last">犯规</van-col>
+			</van-row>
+			
+			<div class="table-body" ref="tableBody">
+				<van-row justify="space-around" v-for="(item, index) in players" :key="index" class="table-row">
+				  <van-col span="2" class="cell">{{ item.number }}</van-col>
+				  <van-col span="4" class="cell">{{ item.name }}</van-col>
+				  <van-col span="2" class="cell">{{ item.score }}</van-col>
+				  <van-col span="2" class="cell">{{ item.hit }}/{{ item.shoot}}</van-col>
+				  <van-col span="2" class="cell">{{ item.threeHit }}/{{ item.threeShoot}}</van-col>
+				  <van-col span="2" class="cell">{{ item.offensiveRebound }}</van-col>
+				  <van-col span="2" class="cell">{{ item.defensiveRebound }}</van-col>
+				  <van-col span="2" class="cell">{{ item.assist }}</van-col>
+				  <van-col span="2" class="cell">{{ item.steal }}</van-col>
+				  <van-col span="2" class="cell">{{ item.block }}</van-col>
+				  <van-col span="2" class="cell-last">{{ item.foul }}</van-col>
+				</van-row>
+			</div>
+		  </div>
+	      <van-floating-bubble icon="add" v-show="tabIndex == 0" @click="onAddPlayer" />
+		</van-tab>
+		
+        <van-tab title="统计" name="1">
+			<van-row>
+				<van-col>
+					<van-sidebar v-model="selectedPlayerIndex" @change="onChangePlayer" style="height: 90vh; width: 15vh">
+					  <van-sidebar-item
+					      v-for="player in players"
+					      :key="player.id"
+					      :title="player.name"
+					    />
+					</van-sidebar>
+				</van-col>
+				<van-col style="width: 85vh">
+					<div id="dataTable" style="margin-bottom: 10px;">
+						<van-row justify="space-around" class="table-header">
+						  <van-col span="2" class="cell">号码</van-col>
+						  <van-col span="4" class="cell">球员</van-col>
+						  <van-col span="2" class="cell">得分</van-col>
+						  <van-col span="2" class="cell">投篮</van-col>
+						  <van-col span="2" class="cell">三分</van-col>
+						  <van-col span="2" class="cell">前板</van-col>
+						  <van-col span="2" class="cell">后板</van-col>
+						  <van-col span="2" class="cell">助攻</van-col>
+						  <van-col span="2" class="cell">抢断</van-col>
+						  <van-col span="2" class="cell">盖帽</van-col>
+						  <van-col span="2" class="cell-last">犯规</van-col>
+						</van-row>
+						
+						<div class="table-body" ref="tableBody">
+							<van-row justify="space-around" v-model="selectedPlayer" :key="index" class="table-row" style="border-bottom: 1px solid #f3f3f3;">
+							  <van-col span="2" class="cell">{{ selectedPlayer.number }}</van-col>
+							  <van-col span="4" class="cell">{{ selectedPlayer.name }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.score }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.hit }}/{{ selectedPlayer.shoot}}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.threeHit }}/{{ selectedPlayer.threeShoot}}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.offensiveRebound }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.defensiveRebound }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.assist }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.steal }}</van-col>
+							  <van-col span="2" class="cell">{{ selectedPlayer.block }}</van-col>
+							  <van-col span="2" class="cell-last">{{ selectedPlayer.foul }}</van-col>
+							</van-row>
+						</div>
+					</div>
+					
+					<!-- 按钮行 -->
+					<van-grid square :border="true" :column-num="5">
+					  <van-grid-item>
+						  <van-button plain type="primary" @click="addSteal(1)" class="full-button">
+							抢断
+						  </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					      <van-button plain type="primary" @click="addBlock(1)" class="full-button">
+							盖帽
+						  </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addAssist(1)" class="full-button">
+							助攻
+					    </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					      <van-button plain type="primary" @click="addHit(1)" class="full-button">
+							2分
+						  </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					      <van-button plain type="primary" @click="addShoot(1)" class="full-button">
+							2分不中
+						  </van-button>
+					  </van-grid-item>
+					  
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addFoul(1)" class="full-button">
+							犯规
+					    </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addOffensiveRebound(1)" class="full-button">
+							前场篮板
+					    </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addDefensiveRebound(1)" class="full-button">
+							后场篮板
+					    </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addThreeHit(1)" class="full-button">
+							3分
+					    </van-button>
+					  </van-grid-item>
+					  <van-grid-item>
+					    <van-button plain type="primary" @click="addThreeShoot(1)" class="full-button">
+							3分不中
+					    </van-button>
+					  </van-grid-item>
+					</van-grid>
+				</van-col>
+			</van-row>
+		</van-tab>
+      </van-tabs>
+    </div>
+
+    <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
+
+    <script>
+      // 初始化 Vue 实例
+      const app = Vue.createApp({
+        data() {
+          return {
+            tabIndex: 0,
+			players: [
+				{ index: 0, name: '张三', number: 25, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+				{ index: 1, name: '李四', number: 30, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+				{ index: 2, name: '李5', number: 3, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+				{ index: 3, name: '李6', number: 6, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+				{ index: 4, name: '李7', number: 15, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+				{ index: 4, name: '李8', number: 5, score: 28, shoot: 20, hit: 11, threeShoot: 3, threeHit: 1, offensiveRebound: 1, defensiveRebound: 8, assist:3, steal: 1, block: 1, foul: 4 },
+			],
+			
+			// tabs1
+			addPlayerShow: 0,
+			newPlayer: { index: 0, name: '', number: null, score: 0, shoot: 0, hit: 0, threeShoot: 0, threeHit: 0, offensiveRebound: 0, defensiveRebound: 0, assist: 0, steal: 0, block: 0, foul: 0 },
+			// tabs2 数据
+			selectedPlayerIndex: 0,
+			selectedPlayer: { index: 0, name: 'xxx', number: 0, score: 0, shoot: 0, hit: 0, threeShoot: 0, threeHit: 0, offensiveRebound: 0, defensiveRebound: 0, assist: 0, steal: 0, block: 0, foul: 0 }
+          };
+        },
+
+        methods: {
+          onClickTab() {
+			if (this.tabIndex == 0) {
+				this.players = this.players.slice().sort((a, b) => b.score - a.score);
+			}
+			else if (this.tabIndex == 1) {
+				this.selectedPlayerIndex = 0;
+				this.selectedPlayer = this.players[this.selectedPlayerIndex];
+			}
+		  },
+		  // tabs1
+		  onAddPlayer() {
+			  this.addPlayerShow = 1;
+		  },
+		  onSubmitNewPlayer() {
+			  this.newPlayer.index = this.players.length;
+			  this.players.push(this.newPlayer)
+			  console.log('123')
+			  console.log(this.players)
+			  this.addPlayerShow = 0;
+			  vant.showToast('新增球员 ' + this.newPlayer.name + ' 成功');
+		  },
+		  
+		  // tabs2
+		  onChangePlayer(idx) {
+			this.selectedPlayerIndex = idx;
+			this.selectedPlayer = this.players[idx];
+		  },
+		  
+		  addScore(num) {
+			  this.selectedPlayer.score = this.selectedPlayer.score + num;
+			  this.players[this.selectedPlayerIndex].score = this.selectedPlayer.score;
+		  },
+		  addSteal(num) {
+			  this.selectedPlayer.steal = this.selectedPlayer.steal + num;
+			  this.players[this.selectedPlayerIndex].steal = this.selectedPlayer.steal;
+		  },
+		  addBlock(num) {
+			  this.selectedPlayer.block = this.selectedPlayer.block + num;
+			  this.players[this.selectedPlayerIndex].block = this.selectedPlayer.block;
+		  },
+		  addOffensiveRebound(num) {
+			  this.selectedPlayer.offensiveRebound = this.selectedPlayer.offensiveRebound + num;
+			  this.players[this.selectedPlayerIndex].offensiveRebound = this.selectedPlayer.offensiveRebound;
+		  },
+		  addDefensiveRebound(num) {
+			  this.selectedPlayer.defensiveRebound = this.selectedPlayer.defensiveRebound + num;
+			  this.players[this.selectedPlayerIndex].defensiveRebound = this.selectedPlayer.defensiveRebound;
+		  },
+		  addHit(num) {
+			  this.selectedPlayer.hit = this.selectedPlayer.hit + num;
+			  this.players[this.selectedPlayerIndex].hit = this.selectedPlayer.hit;
+			  this.addShoot(1);
+			  this.addScore(2);
+		  },
+		  addShoot(num) {
+			  this.selectedPlayer.shoot = this.selectedPlayer.shoot + num;
+			  this.players[this.selectedPlayerIndex].shoot = this.selectedPlayer.shoot;
+		  },
+		  
+		  addFoul(num) {
+			this.selectedPlayer.foul = this.selectedPlayer.foul + num;
+			this.players[this.selectedPlayerIndex].foul = this.selectedPlayer.foul;
+		  },
+		  addAssist(num) {
+			this.selectedPlayer.assist = this.selectedPlayer.assist + num;
+			this.players[this.selectedPlayerIndex].assist = this.selectedPlayer.assist;
+		  },
+		  addThreeHit(num) {
+			  this.selectedPlayer.threeHit = this.selectedPlayer.threeHit + num;
+			  this.players[this.selectedPlayerIndex].threeHit = this.selectedPlayer.threeHit;
+			  this.addThreeShoot(1);
+			  this.selectedPlayer.hit = this.selectedPlayer.hit + num;
+			  this.players[this.selectedPlayerIndex].hit = this.selectedPlayer.hit;
+			  this.addShoot(1);
+			  this.addScore(3);
+		  },
+		  addThreeShoot(num) {
+			  this.selectedPlayer.threeShoot = this.selectedPlayer.threeShoot + num;
+			  this.players[this.selectedPlayerIndex].threeShoot = this.selectedPlayer.threeShoot;
+		  }
+        },
+      });
+
+      app.use(vant);
+      app.mount("#app");
+    </script>
+  </body>
+</html>
